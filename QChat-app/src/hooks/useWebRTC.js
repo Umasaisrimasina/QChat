@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   query,
   serverTimestamp,
@@ -147,12 +149,31 @@ export const useWebRTC = () => {
     candidateTargetCollectionRef.current = null;
   };
 
+  const purgeCallDocument = async (callDocRef) => {
+    if (!callDocRef) return;
+    try {
+      const subcollections = ['offerCandidates', 'answerCandidates', 'joinRequests'];
+      for (const sub of subcollections) {
+        const snap = await getDocs(collection(callDocRef, sub));
+        const deletes = snap.docs.map((d) => deleteDoc(d.ref));
+        await Promise.all(deletes);
+      }
+      await deleteDoc(callDocRef);
+    } catch {
+      // best-effort cleanup — don't block UI
+    }
+  };
+
   const softEndCall = (message = 'Call ended.') => {
     cleanupMainSubscriptions();
     cleanupJoinRequestSubscriptions();
     resetConnection();
     stopLocalStream();
     resetRemoteStream();
+
+    // Purge all call data from Firestore — leave no trace
+    purgeCallDocument(activeCallDocRef.current);
+    activeCallDocRef.current = null;
 
     setCallState('ended');
     setStatus(message);
@@ -536,36 +557,23 @@ export const useWebRTC = () => {
   };
 
   const endCallForSelf = async () => {
+    softEndCall('You left the call.');
+  };
+
+  const endCallForAll = async () => {
+    if (!isCaller) return endCallForSelf();
+
+    // Signal the other party before purging
     try {
       if (activeCallDocRef.current) {
-        await updateDoc(activeCallDocRef.current, {
-          lastAction: 'left',
-          lastActionBy: clientIdRef.current,
-          lastActionAt: serverTimestamp(),
-        });
+        await updateDoc(activeCallDocRef.current, { status: 'ended' });
       }
     } catch {
       // no-op
     }
 
-    softEndCall('You left the call.');
-  };
-
-  const endCallForAll = async () => {
-    if (!activeCallDocRef.current || !isCaller) {
-      return endCallForSelf();
-    }
-
-    try {
-      await updateDoc(activeCallDocRef.current, {
-        status: 'ended',
-        endedBy: clientIdRef.current,
-        endedAt: serverTimestamp(),
-      });
-    } catch {
-      // no-op
-    }
-
+    // Small delay so the other party's listener picks up 'ended' before deletion
+    await new Promise((r) => setTimeout(r, 500));
     softEndCall('Call ended for everyone.');
   };
 
