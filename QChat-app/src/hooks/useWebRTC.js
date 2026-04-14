@@ -603,6 +603,19 @@ export const useWebRTC = () => {
     }
   }, []);
 
+  // Re-attach local stream to video element when call connects.
+  // startLocalMedia runs before the meeting view is rendered, so localVideoRef.current
+  // is null at that time. This effect fires after React renders the meeting view.
+  useEffect(() => {
+    if (callState !== 'in-call') return;
+    const timer = setTimeout(() => {
+      if (localVideoRef.current && localStreamRef.current) {
+        localVideoRef.current.srcObject = localStreamRef.current;
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [callState]);
+
   useEffect(() => {
     return () => {
       cleanupMainSubscriptions();

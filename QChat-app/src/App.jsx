@@ -20,7 +20,6 @@ import {
   MicOff,
   Camera,
   CameraOff,
-  PhoneOff,
   Users,
   Plus,
   LogIn,
@@ -355,7 +354,7 @@ function App() {
             </button>
           )}
           <button type="button" className="ctrl-btn ctrl-end" onClick={isCaller ? endCallForAll : endCallForSelf} aria-label="End call">
-            <PhoneOff size={20} />
+            <Phone size={20} style={{ transform: 'rotate(135deg)' }} />
           </button>
         </div>
         {status && <p className="meeting-status-bar">{status}</p>}
