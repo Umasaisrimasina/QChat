@@ -1,0 +1,16 @@
+{
+  "name": "qchat-signaling",
+  "version": "1.0.0",
+  "description": "QChat WebRTC signaling backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "keywords": ["webrtc", "signaling", "backend"],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
