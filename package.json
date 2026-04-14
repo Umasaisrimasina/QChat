@@ -1,5 +1,12 @@
 {
-  "dependencies": {
-    "firebase": "^12.11.0"
+  "name": "qchat-signaling",
+  "version": "1.0.0",
+  "description": "QChat WebRTC signaling backend",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
